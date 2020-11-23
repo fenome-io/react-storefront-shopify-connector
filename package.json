@@ -1,8 +1,8 @@
 {
-  "name": "react-storefront-connector",
+  "name": "@fenome/react-storefront-shopify-graphql-connector",
   "version": "1.0.0",
-  "description": "Interfaces for creating a React Storefront connector.",
-  "main": "index.js",
+  "description": "React Storefront v8 Shopify Connector",
+  "main": "dist/index.js",
   "scripts": {
     "watch": "tsc --watch",
     "build": "tsc; cp package.json README.md dist;",
@@ -10,9 +10,18 @@
     "docs": "typedoc; git add docs",
     "release": "npm run build && cd dist && npm publish"
   },
-  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fenome-io/react-storefront-shopify-connector.git"
+  },
+  "author": "Fenome",
   "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/fenome-io/react-storefront-shopify-connector/issues"
+  },
+  "homepage": "https://github.com/fenome-io/react-storefront-shopify-connector#readme",
   "devDependencies": {
+    "@types/shopify-buy": "^2.10.3",
     "husky": "^4.2.5",
     "typedoc": "^0.17.7",
     "typescript": "^3.9.5"
@@ -21,5 +30,8 @@
     "hooks": {
       "pre-commit": "npm run docs"
     }
+  },
+  "dependencies": {
+    "shopify-buy": "^2.11.0"
   }
 }
