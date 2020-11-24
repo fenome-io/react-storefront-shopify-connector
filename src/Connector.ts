@@ -98,7 +98,7 @@ export const connector: IConnector = {
     ) => {
         const data = await client.product.fetchQuery({
             query: query,
-            sortBy: 'updated_at',
+            sortBy: 'RELEVANCE',
             first: 5
         })
         const links = data.map((product) => ({
@@ -114,7 +114,7 @@ export const connector: IConnector = {
         }))
         const collectionData = await client.collection.fetchQuery({
             query: query,
-            sortBy: 'updated_at',
+            sortBy: 'RELEVANCE',
             first: 5
         })
         console.log(collectionData[0])
