@@ -17,7 +17,7 @@ import CartResponse from './CartResponse'
 import CartItem from './CartItem'
 import SignUpData from './SignUpData'
 
-const connector: IConnector = {
+export const connector: IConnector = {
     home: async (request: Request, response: Response) => {
         const data = await client.shop.fetchInfo()
         const result: Result<HomePageData> = {
@@ -171,6 +171,6 @@ const connector: IConnector = {
         }
         return result
     },
-    routes: []
+    routes: [] as Route[]
 }
-export default connector
+export default connector 

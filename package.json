@@ -1,5 +1,5 @@
 {
-  "name": "@fenome/react-storefront-shopify-graphql-connector",
+  "name": "@fenome/react-storefront-shopify-connector",
   "version": "1.0.0",
   "description": "React Storefront v8 Shopify Connector",
   "main": "dist/index.js",
@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/fenome-io/react-storefront-shopify-connector#readme",
   "devDependencies": {
+    "@types/node": "^14.14.9",
     "@types/shopify-buy": "^2.10.3",
     "husky": "^4.2.5",
     "typedoc": "^0.17.7",
