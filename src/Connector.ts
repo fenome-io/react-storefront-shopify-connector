@@ -16,6 +16,7 @@ import Route from './Route'
 import CartResponse from './CartResponse'
 import CartItem from './CartItem'
 import SignUpData from './SignUpData'
+import ProductSummary from "./ProductSummary"
 
 export const connector: IConnector = {
     home: async (request: Request, response: Response) => {
@@ -46,25 +47,36 @@ export const connector: IConnector = {
         const result: Result<ProductPageData> = {
             appData: { menu: { items: [] }, tabs: [] },
             pageData: {
-                breadcrumbs: [], product: {
+                breadcrumbs: [],
+                product: {
                     id: product.id as string,
                     url: '/p/' + product.id,
                     name: product.title,
-                    price: parseInt(product.selectedVariant.price),
+                    price: parseInt(product.variants[0].price),
                     media: {
-                        full: [
+                        thumbnails: product.images?.map(image => ({
+                            src: image.src,
+                            alt: product.title + image.id,
+                            type: "image"
+                        })),
+                        full: product.images?.map(image => ({
+                            src: image.src,
+                            alt: product.title + image.id,
+                            type: "image"
+                        }))
 
-                        ],
-                        thumbnails: [
-
-                        ]
                     },
                     description: product.description,
                     thumbnail: {
-                        src: product.images[0].src,
+                        src: product.images?.[0]?.src,
                         alt: product.title,
                         type: "image"
-                    }
+                    },
+                    sku: (product.variants?.[0] as any)?.sku,
+                    sizes: product.options.find(option => option.name == 'Size')
+                        ?.values.map(value => ({ id: value.value, text: value.value })),
+                    colors: product.options.find(option => option.name == 'Color')
+                        ?.values.map(value => ({ id: value.value, text: value.value })),
 
                 }
             }
@@ -84,9 +96,53 @@ export const connector: IConnector = {
         request: Request,
         response: Response
     ) => {
+        const data = await client.product.fetchQuery({
+            query: query,
+            sortBy: 'updated_at',
+            first: 5
+        })
+        const links = data.map((product) => ({
+            href: '/p/' + product.id,
+            text: product.title,
+            as: '/p/' + product.id,
+            thumbnail: {
+                src: product.images?.[0]?.src,
+                alt: product.title,
+                type: "image" as 'image'
+            }
+
+        }))
+        const collectionData = await client.collection.fetchQuery({
+            query: query,
+            sortBy: 'updated_at',
+            first: 5
+        })
+        console.log(collectionData[0])
+        const collectionLinks = collectionData.map((collection) => ({
+            href: '/s/' + collection.id,
+            text: collection.title,
+            as: '/s/' + collection.id,
+            thumbnail: {
+                src: collection.image?.src,
+                alt: collection.title,
+                type: "image" as 'image'
+            }
+
+        }))
         const result: SearchSuggestions = {
-            text: '',
-            groups: []
+            text: query,
+            groups: [
+                {
+                    ui: "thumbnails",
+                    caption: 'Products',
+                    links: links
+                },
+                {
+                    ui: "thumbnails",
+                    caption: 'Collections',
+                    links: collectionLinks
+                }
+            ]
         }
         return result
     },
@@ -138,10 +194,26 @@ export const connector: IConnector = {
         request: Request,
         response: Response
     ) => {
+        const data = await client.product.fetchQuery({
+            query: params.q ?? '',
+            sortBy: 'updated_at',
 
+        })
+        const products = data.map((product) => ({
+            id: product.id as string,
+            url: '/p/' + product.id,
+            name: product.title,
+            price: parseInt(product.variants[0].price),
+            thumbnail: {
+                src: product.images?.[0]?.src,
+                alt: product.title,
+                type: "image" as 'image'
+            }
+
+        }))
         const result: Result<SearchResult> = {
             appData: { menu: { items: [] }, tabs: [] },
-            pageData: { total: 0, page: 0, totalPages: 0, sort: '', sortOptions: [], products: [], cmsSlots: {} }
+            pageData: { total: 0, page: 0, totalPages: 0, sort: '', sortOptions: [], products, cmsSlots: {} }
         }
         return result
     },
