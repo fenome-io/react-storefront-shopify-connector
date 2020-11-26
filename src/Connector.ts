@@ -105,7 +105,7 @@ export const connector: IConnector = {
                         alt: (product as any).images?.edges?.[0]?.node.altText,
                         type: "image"
                     },
-                    sku: (product.variants?.edges?.[0].node as any)?.sku,
+                    sku: (product.variants?.edges?.[0].node as any)?.sku ?? product.variantBySelectedOptions?.sku,
                     colors: product.options.find(option => option.name == 'Color')
                         ?.values.map(value => ({ id: value.value, text: value.value })),
                     sizes: product.options.find(option => option.name == 'Size')
@@ -137,6 +137,7 @@ export const connector: IConnector = {
 
                     },
                     description: product.description,
+                    variantBySelectedOptions: product.variantBySelectedOptions,
                     isVariable: isVariable(product),
                     quantityAvailable: isVariable(product) ? product.variantBySelectedOptions?.quantityAvailable || 0 : product.variants?.edges?.[0].node.quantityAvailable
                 }
@@ -227,6 +228,7 @@ export const connector: IConnector = {
         request: Request,
         response: Response
     ) => {
+
         const result: CartResponse = {
             cart: { items: [] }
         }

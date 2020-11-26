@@ -50,4 +50,5 @@ export interface Product extends ProductSummary {
   isVariable?: boolean
   currencyCode?: string
   quantityAvailable?: number | undefined | null
+  variantBySelectedOptions?: any
 }
