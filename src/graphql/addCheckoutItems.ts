@@ -1,22 +1,23 @@
 import { gql } from '@apollo/client';
 
-export const CREATE_CHECKOUT = gql`
-  mutation checkoutCreate($input: CheckoutCreateInput!) {
-    checkoutCreate(input: $input) {
+export const ADD_CHECKOUT_LINES = gql`
+  mutation checkoutLineItemsAdd($lineItems: [CheckoutLineItemInput!]!, $checkoutId: ID!) {
+    checkoutLineItemsAdd(lineItems: $lineItems, checkoutId: $checkoutId) {
       checkout {
         id
         ready
         currencyCode
-        subtotalPrice
-        taxesIncluded
-        totalTax
-        totalPrice
-        lineItems(first: 10) {
+        subtotalPriceV2{
+          amount
+          currencyCode
+        }
+        lineItems(first: 250) {
           edges {
             node {
               id
-              quantity
               title
+              quantity
+              
               variant {
                 id
                 priceV2{

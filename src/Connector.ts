@@ -23,6 +23,9 @@ import { PRODUCT_BY_SLUG, PRODUCT_BY_SLUG_WITH_OPTIONS } from "./graphql/product
 import isVariable from "./helpers/isVariable"
 import { CREATE_CHECKOUT } from "./graphql/createCheckout"
 import { GET_CHECKOUT_BY_ID } from "./graphql/getCheckoutById"
+import { UPDATE_CHECKOUT_LINES } from "./graphql/updateCheckoutItems"
+import { REMOVE_CHECKOUT_LINES } from "./graphql/removeCheckoutItems"
+import { ADD_CHECKOUT_LINES } from "./graphql/addCheckoutItems"
 
 
 export const connector: IConnector = {
@@ -140,7 +143,7 @@ export const connector: IConnector = {
 
                     },
                     description: product.description,
-                    variantBySelectedOptions: product.variantBySelectedOptions ?? product.variants?.edges?.[0],
+                    variantBySelectedOptions: product.variantBySelectedOptions ?? product.variants?.edges?.[0].node,
                     isVariable: isVariable(product),
                     quantityAvailable: isVariable(product) ? product.variantBySelectedOptions?.quantityAvailable || 0 : product.variants?.edges?.[0].node.quantityAvailable
                 }
@@ -278,10 +281,11 @@ export const connector: IConnector = {
         request: Request,
         response: Response
     ) => {
-        const checkoutData = (await Client.mutate({
-            mutation: CREATE_CHECKOUT,
-            variables: {
-                input: {
+        try {
+            const checkoutData = (await Client.mutate({
+                mutation: ADD_CHECKOUT_LINES,
+                variables: {
+                    checkoutId: 'Z2lkOi8vc2hvcGlmeS9DaGVja291dC82OWU3ZGYewZTYwMTk1YzNiZDI0ZWE2YjVkMGM1YmE5Yj9rZXk9MjY3MGI2Yjc4NjM3YjVhOGUyY2MzYjczODA5NmU5OWY=',
                     lineItems: [
                         {
                             quantity: product.quantity,
@@ -289,9 +293,86 @@ export const connector: IConnector = {
                         }
                     ]
                 }
+            }))?.data?.checkoutLineItemsAdd
+            const result: CartResponse = {
+                cart: {
+                    items: checkoutData.checkout.lineItems.edges.map(edge => {
+                        const item = edge.node
+                        return {
+                            id: item.id,
+                            quantity: item.quantity,
+                            name: item.title,
+                            url: '/p/' + item.variant.product.handle,
+                            price: item.variant.priceV2.amount,
+                            thumbnail: {
+                                src: item.variant.image.transformedSrc,
+                                alt: item.variant.image.altText,
+                                type: "image"
+                            },
+                        }
+                    })
+                }
             }
-        }))?.data?.checkoutCreate
-        console.log(checkoutData);
+
+            return result
+        } catch (error) {
+            const checkoutData = (await Client.mutate({
+                mutation: CREATE_CHECKOUT,
+                variables: {
+                    input: {
+                        lineItems: [
+                            {
+                                quantity: product.quantity,
+                                variantId: product.product.variantBySelectedOptions.id
+                            }
+                        ]
+                    }
+                }
+            }))?.data?.checkoutCreate
+            console.log(checkoutData);
+            const result: CartResponse = {
+                cart: {
+                    items: checkoutData.checkout.lineItems.edges.map(edge => {
+                        const item = edge.node
+                        return {
+                            id: item.id,
+                            quantity: item.quantity,
+                            name: item.title,
+                            url: '/p/' + item.variant.product.handle,
+                            price: item.variant.priceV2.amount,
+                            thumbnail: {
+                                src: item.variant.image.transformedSrc,
+                                alt: item.variant.image.altText,
+                                type: "image"
+                            },
+                        }
+                    })
+                }
+            }
+            console.log(result.cart?.items[0])
+            return result
+        }
+    },
+    updateCartItem: async (
+        item: CartItem,
+        quantity: number,
+        request: Request,
+        response: Response
+    ) => {
+
+        const checkoutData = (await Client.mutate({
+            mutation: UPDATE_CHECKOUT_LINES,
+            variables: {
+                checkoutId: 'Z2lkOi8vc2hvcGlmeS9DaGVja291dC82OWU3ZGYwZTYwMTk1YzNiZDI0ZWE2YjVkMGM1YmE5Yj9rZXk9MjY3MGI2Yjc4NjM3YjVhOGUyY2MzYjczODA5NmU5OWY=',
+                lineItems: [
+                    {
+                        quantity: quantity,
+                        id: item.id
+                    }
+                ]
+            }
+        }))?.data?.checkoutLineItemsUpdate
+
         const result: CartResponse = {
             cart: {
                 items: checkoutData.checkout.lineItems.edges.map(edge => {
@@ -301,7 +382,7 @@ export const connector: IConnector = {
                         quantity: item.quantity,
                         name: item.title,
                         url: '/p/' + item.variant.product.handle,
-                        price: item.unitPrice,
+                        price: item.variant.priceV2.amount,
                         thumbnail: {
                             src: item.variant.image.transformedSrc,
                             alt: item.variant.image.altText,
@@ -311,23 +392,34 @@ export const connector: IConnector = {
                 })
             }
         }
-        console.log(result.cart?.items[0])
-        return result
-    },
-    updateCartItem: async (
-        item: CartItem,
-        quantity: number,
-        request: Request,
-        response: Response
-    ) => {
-        const result: CartResponse = {
-            cart: { items: [] }
-        }
         return result
     },
     removeCartItem: async (item: CartItem, request: Request, response: Response) => {
+        const checkoutData = (await Client.mutate({
+            mutation: REMOVE_CHECKOUT_LINES,
+            variables: {
+                checkoutId: 'Z2lkOi8vc2hvcGlmeS9DaGVja291dC82OWU3ZGYwZTYwMTk1YzNiZDI0ZWE2YjVkMGM1YmE5Yj9rZXk9MjY3MGI2Yjc4NjM3YjVhOGUyY2MzYjczODA5NmU5OWY=',
+                lineItemIds: [item.id]
+            }
+        }))?.data?.checkoutLineItemsRemove
         const result: CartResponse = {
-            cart: { items: [] }
+            cart: {
+                items: checkoutData.checkout.lineItems.edges.map(edge => {
+                    const item = edge.node
+                    return {
+                        id: item.id,
+                        quantity: item.quantity,
+                        name: item.title,
+                        url: '/p/' + item.variant.product.handle,
+                        price: item.variant.priceV2.amount,
+                        thumbnail: {
+                            src: item.variant.image.transformedSrc,
+                            alt: item.variant.image.altText,
+                            type: "image"
+                        },
+                    }
+                })
+            }
         }
         return result
     },
