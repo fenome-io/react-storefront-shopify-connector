@@ -34,6 +34,7 @@ export const PRODUCT_BY_SLUG = gql`
         }
         edges {
           node {
+            id
             sku
             quantityAvailable
             compareAtPriceV2 {

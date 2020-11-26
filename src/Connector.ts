@@ -21,6 +21,9 @@ import { COLLECTION_BY_SLUG } from "./graphql/collectionBySlug"
 import getPrice from "./helpers/getPrice"
 import { PRODUCT_BY_SLUG, PRODUCT_BY_SLUG_WITH_OPTIONS } from "./graphql/productBySlug"
 import isVariable from "./helpers/isVariable"
+import { CREATE_CHECKOUT } from "./graphql/createCheckout"
+import { GET_CHECKOUT_BY_ID } from "./graphql/getCheckoutById"
+
 
 export const connector: IConnector = {
     home: async (request: Request, response: Response) => {
@@ -137,7 +140,7 @@ export const connector: IConnector = {
 
                     },
                     description: product.description,
-                    variantBySelectedOptions: product.variantBySelectedOptions,
+                    variantBySelectedOptions: product.variantBySelectedOptions ?? product.variants?.edges?.[0],
                     isVariable: isVariable(product),
                     quantityAvailable: isVariable(product) ? product.variantBySelectedOptions?.quantityAvailable || 0 : product.variants?.edges?.[0].node.quantityAvailable
                 }
@@ -208,30 +211,106 @@ export const connector: IConnector = {
         return result
     },
     session: async (request: Request, response: Response) => {
+        const checkoutData = (await Client.query({
+            query: GET_CHECKOUT_BY_ID,
+            variables: {
+                id: 'Z2lkOi8vc2hvcGlmeS9DaGVja291dC82OWU3ZGYwZTYwMTk1YzNiZDI0ZWE2YjVkMGM1YmE5Yj9rZXk9MjY3MGI2Yjc4NjM3YjVhOGUyY2MzYjczODA5NmU5OWY=',
+            }
+        }))
         const result: Session = {
-            cart: { items: [] },
+            cart: {
+                items: checkoutData.data.node.lineItems.edges.map(edge => {
+                    const item = edge.node
+                    return {
+                        id: item.id,
+                        quantity: item.quantity,
+                        name: item.title,
+                        url: '/p/' + item.variant.product.handle,
+                        price: item.variant.priceV2.amount,
+                        thumbnail: {
+                            src: item.variant.image.transformedSrc,
+                            alt: item.variant.image.altText,
+                            type: "image"
+                        },
+                    }
+                })
+            },
             signedIn: false
         }
+
         return result
     },
     cart: async (request: Request, response: Response) => {
-
+        const checkoutData = (await Client.query({
+            query: GET_CHECKOUT_BY_ID,
+            variables: {
+                id: 'Z2lkOi8vc2hvcGlmeS9DaGVja291dC82OWU3ZGYwZTYwMTk1YzNiZDI0ZWE2YjVkMGM1YmE5Yj9rZXk9MjY3MGI2Yjc4NjM3YjVhOGUyY2MzYjczODA5NmU5OWY=',
+            }
+        }))
         const result: Result<CartResponse> = {
             appData: { menu: { items: [] }, tabs: [] },
-            pageData: {}
+            pageData: {
+                cart: {
+                    items: checkoutData.data.node.lineItems.edges.map(edge => {
+                        const item = edge.node
+                        return {
+                            id: item.id,
+                            quantity: item.quantity,
+                            name: item.title,
+                            url: '/p/' + item.variant.product.handle,
+                            price: item.variant.priceV2.amount,
+                            thumbnail: {
+                                src: item.variant.image.transformedSrc,
+                                alt: item.variant.image.altText,
+                                type: "image"
+                            },
+                        }
+                    })
+                }
+            }
         }
+        console.log(result.pageData.cart?.items);
         return result
     },
     addToCart: async (
-        product: Product,
-        quantity: number,
+        product: { product: Product, quantity: number },
         request: Request,
         response: Response
     ) => {
-
+        const checkoutData = (await Client.mutate({
+            mutation: CREATE_CHECKOUT,
+            variables: {
+                input: {
+                    lineItems: [
+                        {
+                            quantity: product.quantity,
+                            variantId: product.product.variantBySelectedOptions.id
+                        }
+                    ]
+                }
+            }
+        }))?.data?.checkoutCreate
+        console.log(checkoutData);
         const result: CartResponse = {
-            cart: { items: [] }
+            cart: {
+                items: checkoutData.checkout.lineItems.edges.map(edge => {
+                    const item = edge.node
+                    return {
+                        id: item.id,
+                        quantity: item.quantity,
+                        name: item.title,
+                        url: '/p/' + item.variant.product.handle,
+                        price: item.unitPrice,
+                        thumbnail: {
+                            src: item.variant.image.transformedSrc,
+                            alt: item.variant.image.altText,
+                            type: "image"
+                        },
+                    }
+                })
+            }
         }
+        console.log(result.cart?.items[0])
         return result
     },
     updateCartItem: async (

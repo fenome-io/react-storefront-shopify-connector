@@ -97,8 +97,7 @@ export interface IConnector {
    * @param response The http response
    */
   addToCart: (
-    product: Product,
-    quantity: number,
+    product: { product: Product, quantity: number },
     request: Request,
     response: Response
   ) => Promise<CartResponse>
