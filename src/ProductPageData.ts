@@ -46,5 +46,7 @@ export interface Product extends ProductSummary {
    * Available colors
    */
   colors?: Color[]
+  options?: { name: string, values: string[] }[]
+  isVariable?: boolean
   quantityAvailable?: number | undefined | null
 }

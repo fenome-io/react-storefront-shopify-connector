@@ -20,6 +20,7 @@ import MenuItem from "./MenuItem"
 import { COLLECTION_BY_SLUG } from "./graphql/collectionBySlug"
 import getPrice from "./helpers/getPrice"
 import { PRODUCT_BY_SLUG, PRODUCT_BY_SLUG_WITH_OPTIONS } from "./graphql/productBySlug"
+import isVariable from "./helpers/isVariable"
 
 export const connector: IConnector = {
     home: async (request: Request, response: Response) => {
@@ -107,6 +108,7 @@ export const connector: IConnector = {
                         ?.values.map(value => ({ id: value.value, text: value.value })),
                     sizes: product.options.find(option => option.name == 'Size')
                         ?.values.map(value => ({ id: value, text: value })),
+                    options: product.options,
                     media: {
                         thumbnails: product?.variantBySelectedOptions?.image ? [
                             {
@@ -133,10 +135,12 @@ export const connector: IConnector = {
 
                     },
                     description: product.description,
-                    quantityAvailable: product?.variantBySelectedOptions?.quantityAvailable ?? product.variants?.edges?.[0].node.quantityAvailable ?? 0
+                    isVariable: isVariable(product),
+                    quantityAvailable: isVariable(product) ? product.variantBySelectedOptions?.quantityAvailable || 0 : product.variants?.edges?.[0].node.quantityAvailable
                 }
             }
         }
+        console.log(result.pageData.product.quantityAvailable)
         return result
     },
     productSlots: (params: ProductSlotsParams, request: Request, res: Response) => {
