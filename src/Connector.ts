@@ -1,4 +1,4 @@
-import client from "./Client"
+import Client, { client } from "./Client"
 import { IConnector } from "./IConnector"
 import HomePageData from './HomePageData'
 import Result from './Result'
@@ -16,13 +16,21 @@ import Route from './Route'
 import CartResponse from './CartResponse'
 import CartItem from './CartItem'
 import SignUpData from './SignUpData'
-import ProductSummary from "./ProductSummary"
+import MenuItem from "./MenuItem"
+import { COLLECTION_BY_SLUG } from "./graphql/collectionBySlug"
+import getPrice from "./helpers/getPrice"
 
 export const connector: IConnector = {
     home: async (request: Request, response: Response) => {
         const data = await client.shop.fetchInfo()
+        const collections = await client.collection.fetchAll()
+        const items: Array<MenuItem> = collections.map(c => ({
+            text: c.title,
+            href: `/s/[subcategoryId]`,
+            as: `/s/${c.handle}`
+        }))
         const result: Result<HomePageData> = {
-            appData: { menu: { items: [] }, tabs: [] },
+            appData: { menu: { items }, tabs: items },
             pageData: { title: data.name, slots: { heading: data.name } }
         }
         return result
@@ -32,9 +40,33 @@ export const connector: IConnector = {
         request: Request,
         response: Response
     ) => {
+        const collection = (await Client.query({
+            query: COLLECTION_BY_SLUG,
+            variables: {
+                handle: params.slug?.[0]
+            }
+        }))?.data?.collectionByHandle
+        const products = collection.products?.edges.map((edge: { node: ShopifyBuy.Product }) => {
+            const product = edge.node
+            return {
+                id: product.handle,
+                url: '/p/' + product.handle,
+                name: product.title,
+                price: getPrice(product.priceRange.minVariantPrice.amount, product.priceRange.maxVariantPrice.amount, product.priceRange.minVariantPrice.currencyCode),
+                thumbnail: {
+                    src: product.images?.edges?.[0]?.node.transformedSrc,
+                    alt: product.images?.edges?.[0]?.node.altText,
+                    type: "image"
+                },
+                sku: (product.variants?.[0] as any)?.sku,
+                colors: product.options.find(option => option.name == 'Color')
+                    ?.values.map(value => ({ id: value.value, text: value.value })),
+
+            }
+        })
         const result: Result<SubcategoryPageData> = {
             appData: { menu: { items: [] }, tabs: [] },
-            pageData: { title: '', name: '', id: '', total: 0, page: 0, totalPages: 0, sort: '', sortOptions: [], products: [], cmsSlots: {} }
+            pageData: { title: collection.title, name: collection.title, id: collection.id, total: products.length, page: 0, totalPages: 0, sort: '', sortOptions: [], products, cmsSlots: {} }
         }
         return result
     },
@@ -117,7 +149,6 @@ export const connector: IConnector = {
             sortBy: 'RELEVANCE',
             first: 5
         })
-        console.log(collectionData[0])
         const collectionLinks = collectionData.map((collection) => ({
             href: '/s/' + collection.id,
             text: collection.title,

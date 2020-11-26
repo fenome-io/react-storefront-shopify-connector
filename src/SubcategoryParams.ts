@@ -4,5 +4,5 @@ export default interface SubcategoryParams extends SearchParamsBase {
   /**
    * The id of the subcategory
    */
-  id: string
+  slug: string[] | string
 }
