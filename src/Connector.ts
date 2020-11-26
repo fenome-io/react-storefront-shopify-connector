@@ -61,7 +61,7 @@ export const connector: IConnector = {
                     alt: (product as any).images?.edges?.[0]?.node.altText,
                     type: "image"
                 },
-                sku: (product.variants?.[0] as any)?.sku,
+                sku: (product.variants?.edges?.[0].node as any)?.sku,
                 colors: product.options.find(option => option.name == 'Color')
                     ?.values.map(value => ({ id: value.value, text: value.value })),
 
@@ -85,8 +85,6 @@ export const connector: IConnector = {
                 selectedOptions: params.size && [{ name: "Size", value: params.size }]
             }
         }))?.data?.productByHandle
-        console.log(params.size)
-        console.log(product)
         const result: Result<ProductPageData> = {
             appData: { menu: { items: [] }, tabs: [] },
             pageData: {
@@ -98,13 +96,13 @@ export const connector: IConnector = {
                     priceText: getPrice((product as any).priceRange.minVariantPrice.amount,
                         (product as any).priceRange.maxVariantPrice.amount,
                         (product as any).priceRange.minVariantPrice.currencyCode, product.variantBySelectedOptions),
-                    basePriceText: `${product?.variantBySelectedOptions?.compareAtPriceV2?.amount} ${product?.variantBySelectedOptions?.compareAtPriceV2?.currencyCode}`,
+                    basePriceText: product?.variantBySelectedOptions?.compareAtPriceV2?.amount && `${product?.variantBySelectedOptions?.compareAtPriceV2?.amount} ${product?.variantBySelectedOptions?.compareAtPriceV2?.currencyCode}`,
                     thumbnail: {
                         src: (product as any).images?.edges?.[0]?.node.transformedSrc,
                         alt: (product as any).images?.edges?.[0]?.node.altText,
                         type: "image"
                     },
-                    sku: (product.variants?.[0] as any)?.sku,
+                    sku: (product.variants?.edges?.[0].node as any)?.sku,
                     colors: product.options.find(option => option.name == 'Color')
                         ?.values.map(value => ({ id: value.value, text: value.value })),
                     sizes: product.options.find(option => option.name == 'Size')
@@ -135,6 +133,7 @@ export const connector: IConnector = {
 
                     },
                     description: product.description,
+                    quantityAvailable: product?.variantBySelectedOptions?.quantityAvailable ?? product.variants?.edges?.[0].node.quantityAvailable ?? 0
                 }
             }
         }

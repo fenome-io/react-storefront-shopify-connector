@@ -46,4 +46,5 @@ export interface Product extends ProductSummary {
    * Available colors
    */
   colors?: Color[]
+  quantityAvailable?: number | undefined | null
 }
