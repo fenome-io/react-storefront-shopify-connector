@@ -26,6 +26,7 @@ import { GET_CHECKOUT_BY_ID } from "./graphql/getCheckoutById"
 import { UPDATE_CHECKOUT_LINES } from "./graphql/updateCheckoutItems"
 import { REMOVE_CHECKOUT_LINES } from "./graphql/removeCheckoutItems"
 import { ADD_CHECKOUT_LINES } from "./graphql/addCheckoutItems"
+import cookie, { serialize } from 'cookie';
 
 
 export const connector: IConnector = {
@@ -214,43 +215,63 @@ export const connector: IConnector = {
         return result
     },
     session: async (request: Request, response: Response) => {
-        const checkoutData = (await Client.query({
-            query: GET_CHECKOUT_BY_ID,
-            variables: {
-                id: 'Z2lkOi8vc2hvcGlmeS9DaGVja291dC82OWU3ZGYwZTYwMTk1YzNiZDI0ZWE2YjVkMGM1YmE5Yj9rZXk9MjY3MGI2Yjc4NjM3YjVhOGUyY2MzYjczODA5NmU5OWY=',
+        try {
+            const checkoutData = (await Client.query({
+                query: GET_CHECKOUT_BY_ID,
+                variables: {
+                    id: cookie.parse(request.headers.cookie).checkoutId
+                }
+            }))
+            const result: Session = {
+                cart: {
+                    items: checkoutData.data.node.lineItems.edges.map(edge => {
+                        const item = edge.node
+                        return {
+                            id: item.id,
+                            quantity: item.quantity,
+                            name: item.title,
+                            url: '/p/' + item.variant.product.handle,
+                            price: item.variant.priceV2.amount,
+                            thumbnail: {
+                                src: item.variant.image.transformedSrc,
+                                alt: item.variant.image.altText,
+                                type: "image"
+                            },
+                        }
+                    })
+                },
+                signedIn: false,
+                currency: checkoutData.data.node.currencyCode
             }
-        }))
-        const result: Session = {
-            cart: {
-                items: checkoutData.data.node.lineItems.edges.map(edge => {
-                    const item = edge.node
-                    return {
-                        id: item.id,
-                        quantity: item.quantity,
-                        name: item.title,
-                        url: '/p/' + item.variant.product.handle,
-                        price: item.variant.priceV2.amount,
-                        thumbnail: {
-                            src: item.variant.image.transformedSrc,
-                            alt: item.variant.image.altText,
-                            type: "image"
-                        },
+            // response.setHeader('Set-Cookie', serialize('checkoutId', checkoutData.data.node.id));
+            return result
+        } catch (error) {
+            const checkoutData = (await Client.mutate({
+                mutation: CREATE_CHECKOUT,
+                variables: {
+                    input: {
                     }
-                })
-            },
-            signedIn: false,
-            currency: checkoutData.data.node.currencyCode
+                }
+            }))?.data?.checkoutCreate
+
+            const result: CartResponse = {
+                cart: {
+                    items: []
+                }
+            }
+            response.setHeader('Set-Cookie', serialize('checkoutId', checkoutData.checkout.id));
+            return result
         }
 
-        return result
     },
     cart: async (request: Request, response: Response) => {
         const checkoutData = (await Client.query({
             query: GET_CHECKOUT_BY_ID,
             variables: {
-                id: 'Z2lkOi8vc2hvcGlmeS9DaGVja291dC82OWU3ZGYwZTYwMTk1YzNiZDI0ZWE2YjVkMGM1YmE5Yj9rZXk9MjY3MGI2Yjc4NjM3YjVhOGUyY2MzYjczODA5NmU5OWY=',
+                id: cookie.parse(request.headers.cookie).checkoutId
             }
         }))
+
         const result: Result<CartResponse> = {
             appData: { menu: { items: [] }, tabs: [] },
             pageData: {
@@ -273,7 +294,7 @@ export const connector: IConnector = {
                 }
             }
         }
-        console.log(result.pageData.cart?.items);
+        response.setHeader('Set-Cookie', serialize('checkoutId', checkoutData.data.node.id));
         return result
     },
     addToCart: async (
@@ -285,7 +306,7 @@ export const connector: IConnector = {
             const checkoutData = (await Client.mutate({
                 mutation: ADD_CHECKOUT_LINES,
                 variables: {
-                    checkoutId: 'Z2lkOi8vc2hvcGlmeS9DaGVja291dC82OWU3ZGYewZTYwMTk1YzNiZDI0ZWE2YjVkMGM1YmE5Yj9rZXk9MjY3MGI2Yjc4NjM3YjVhOGUyY2MzYjczODA5NmU5OWY=',
+                    checkoutId: cookie.parse(request.headers.cookie).checkoutId,
                     lineItems: [
                         {
                             quantity: product.quantity,
@@ -313,7 +334,7 @@ export const connector: IConnector = {
                     })
                 }
             }
-
+            // response.setHeader('Set-Cookie', serialize('checkoutId', checkoutData.checkout.id));
             return result
         } catch (error) {
             const checkoutData = (await Client.mutate({
@@ -329,7 +350,7 @@ export const connector: IConnector = {
                     }
                 }
             }))?.data?.checkoutCreate
-            console.log(checkoutData);
+
             const result: CartResponse = {
                 cart: {
                     items: checkoutData.checkout.lineItems.edges.map(edge => {
@@ -349,7 +370,7 @@ export const connector: IConnector = {
                     })
                 }
             }
-            console.log(result.cart?.items[0])
+            response.setHeader('Set-Cookie', serialize('checkoutId', checkoutData.checkout.id));
             return result
         }
     },
@@ -363,7 +384,7 @@ export const connector: IConnector = {
         const checkoutData = (await Client.mutate({
             mutation: UPDATE_CHECKOUT_LINES,
             variables: {
-                checkoutId: 'Z2lkOi8vc2hvcGlmeS9DaGVja291dC82OWU3ZGYwZTYwMTk1YzNiZDI0ZWE2YjVkMGM1YmE5Yj9rZXk9MjY3MGI2Yjc4NjM3YjVhOGUyY2MzYjczODA5NmU5OWY=',
+                checkoutId: cookie.parse(request.headers.cookie).checkoutId,
                 lineItems: [
                     {
                         quantity: quantity,
@@ -392,13 +413,14 @@ export const connector: IConnector = {
                 })
             }
         }
+        // response.setHeader('Set-Cookie', serialize('checkoutId', checkoutData.checkout.id));
         return result
     },
     removeCartItem: async (item: CartItem, request: Request, response: Response) => {
         const checkoutData = (await Client.mutate({
             mutation: REMOVE_CHECKOUT_LINES,
             variables: {
-                checkoutId: 'Z2lkOi8vc2hvcGlmeS9DaGVja291dC82OWU3ZGYwZTYwMTk1YzNiZDI0ZWE2YjVkMGM1YmE5Yj9rZXk9MjY3MGI2Yjc4NjM3YjVhOGUyY2MzYjczODA5NmU5OWY=',
+                checkoutId: cookie.parse(request.headers.cookie).checkoutId,
                 lineItemIds: [item.id]
             }
         }))?.data?.checkoutLineItemsRemove
@@ -421,6 +443,7 @@ export const connector: IConnector = {
                 })
             }
         }
+        // response.setHeader('Set-Cookie', serialize('checkoutId', checkoutData.checkout.id));
         return result
     },
     search: async (
