@@ -235,7 +235,8 @@ export const connector: IConnector = {
                     }
                 })
             },
-            signedIn: false
+            signedIn: false,
+            currency: checkoutData.data.node.currencyCode
         }
 
         return result
