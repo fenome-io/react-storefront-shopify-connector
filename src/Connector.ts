@@ -49,13 +49,15 @@ export const connector: IConnector = {
         const products = collection.products?.edges.map((edge: { node: ShopifyBuy.Product }) => {
             const product = edge.node
             return {
-                id: product.handle,
-                url: '/p/' + product.handle,
+                id: (product as any).handle,
+                url: '/p/' + (product as any).handle,
                 name: product.title,
-                price: getPrice(product.priceRange.minVariantPrice.amount, product.priceRange.maxVariantPrice.amount, product.priceRange.minVariantPrice.currencyCode),
+                price: getPrice((product as any).priceRange.minVariantPrice.amount,
+                    (product as any).priceRange.maxVariantPrice.amount,
+                    (product as any).priceRange.minVariantPrice.currencyCode),
                 thumbnail: {
-                    src: product.images?.edges?.[0]?.node.transformedSrc,
-                    alt: product.images?.edges?.[0]?.node.altText,
+                    src: (product as any).images?.edges?.[0]?.node.transformedSrc,
+                    alt: (product as any).images?.edges?.[0]?.node.altText,
                     type: "image"
                 },
                 sku: (product.variants?.[0] as any)?.sku,
