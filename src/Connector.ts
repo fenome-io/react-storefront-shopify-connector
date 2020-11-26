@@ -19,6 +19,7 @@ import SignUpData from './SignUpData'
 import MenuItem from "./MenuItem"
 import { COLLECTION_BY_SLUG } from "./graphql/collectionBySlug"
 import getPrice from "./helpers/getPrice"
+import { PRODUCT_BY_SLUG, PRODUCT_BY_SLUG_WITH_OPTIONS } from "./graphql/productBySlug"
 
 export const connector: IConnector = {
     home: async (request: Request, response: Response) => {
@@ -77,41 +78,63 @@ export const connector: IConnector = {
         request: Request,
         response: Response
     ) => {
-        const product = await client.product.fetch(params.id)
+        const product = (await Client.query({
+            query: (params.size || params.color) ? PRODUCT_BY_SLUG_WITH_OPTIONS : PRODUCT_BY_SLUG,
+            variables: {
+                handle: params.id,
+                selectedOptions: params.size && [{ name: "Size", value: params.size }]
+            }
+        }))?.data?.productByHandle
+        console.log(params.size)
+        console.log(product)
         const result: Result<ProductPageData> = {
             appData: { menu: { items: [] }, tabs: [] },
             pageData: {
                 breadcrumbs: [],
                 product: {
-                    id: product.id as string,
-                    url: '/p/' + product.id,
+                    id: (product as any).handle,
+                    url: '/p/' + (product as any).handle,
                     name: product.title,
-                    price: parseInt(product.variants[0].price),
+                    priceText: getPrice((product as any).priceRange.minVariantPrice.amount,
+                        (product as any).priceRange.maxVariantPrice.amount,
+                        (product as any).priceRange.minVariantPrice.currencyCode, product.variantBySelectedOptions),
+                    basePriceText: `${product?.variantBySelectedOptions?.compareAtPriceV2?.amount} ${product?.variantBySelectedOptions?.compareAtPriceV2?.currencyCode}`,
+                    thumbnail: {
+                        src: (product as any).images?.edges?.[0]?.node.transformedSrc,
+                        alt: (product as any).images?.edges?.[0]?.node.altText,
+                        type: "image"
+                    },
+                    sku: (product.variants?.[0] as any)?.sku,
+                    colors: product.options.find(option => option.name == 'Color')
+                        ?.values.map(value => ({ id: value.value, text: value.value })),
+                    sizes: product.options.find(option => option.name == 'Size')
+                        ?.values.map(value => ({ id: value, text: value })),
                     media: {
-                        thumbnails: product.images?.map(image => ({
-                            src: image.src,
-                            alt: product.title + image.id,
+                        thumbnails: product?.variantBySelectedOptions?.image ? [
+                            {
+                                src: product?.variantBySelectedOptions?.image?.transformedSrc,
+                                alt: product?.variantBySelectedOptions?.image?.altText,
+                                type: "image"
+                            }
+                        ] : product.images?.edges?.map(edge => ({
+                            src: edge.node.transformedSrc,
+                            alt: edge.node.altText,
                             type: "image"
                         })),
-                        full: product.images?.map(image => ({
-                            src: image.src,
-                            alt: product.title + image.id,
+                        full: product?.variantBySelectedOptions?.image ? [
+                            {
+                                src: product?.variantBySelectedOptions?.image?.originalSrc,
+                                alt: product?.variantBySelectedOptions?.image?.altText,
+                                type: "image"
+                            }
+                        ] : product.images?.edges?.map(edge => ({
+                            src: edge.node.originalSrc,
+                            alt: edge.node.altText,
                             type: "image"
                         }))
 
                     },
                     description: product.description,
-                    thumbnail: {
-                        src: product.images?.[0]?.src,
-                        alt: product.title,
-                        type: "image"
-                    },
-                    sku: (product.variants?.[0] as any)?.sku,
-                    sizes: product.options.find(option => option.name == 'Size')
-                        ?.values.map(value => ({ id: value.value, text: value.value })),
-                    colors: product.options.find(option => option.name == 'Color')
-                        ?.values.map(value => ({ id: value.value, text: value.value })),
-
                 }
             }
         }
