@@ -91,10 +91,11 @@ export const connector: IConnector = {
             pageData: {
                 breadcrumbs: [],
                 product: {
-                    id: (product as any).handle,
-                    url: '/p/' + (product as any).handle,
+                    id: (product as any)?.handle,
+                    url: '/p/' + (product as any)?.handle,
                     name: product.title,
                     price: isVariable(product) ? product?.variantBySelectedOptions?.priceV2?.amount : product.variants?.edges?.[0].node.priceV2?.amount,
+                    currencyCode: isVariable(product) ? product?.variantBySelectedOptions?.priceV2?.currencyCode : product.variants?.edges?.[0].node.priceV2?.currencyCode,
                     priceText: getPrice((product as any).priceRange.minVariantPrice.amount,
                         (product as any).priceRange.maxVariantPrice.amount,
                         (product as any).priceRange.minVariantPrice.currencyCode, product.variantBySelectedOptions),
@@ -141,7 +142,6 @@ export const connector: IConnector = {
                 }
             }
         }
-        console.log(result.pageData.product.quantityAvailable)
         return result
     },
     productSlots: (params: ProductSlotsParams, request: Request, res: Response) => {
