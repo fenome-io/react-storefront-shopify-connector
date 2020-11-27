@@ -55,6 +55,7 @@ export const PRODUCT_BY_SLUG = gql`
 export const PRODUCT_BY_SLUG_WITH_OPTIONS = gql`
   query productByHandle($handle: String!, $selectedOptions:[SelectedOptionInput!]!) {
     productByHandle(handle: $handle) {
+      id
       handle
       title
       description
