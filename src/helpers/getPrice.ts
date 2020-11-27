@@ -1,5 +1,5 @@
 
-export default (min: string, max: string, currency: string, variant: any) => {
+export default (min: string, max: string, currency: string, variant?: any) => {
     if (variant) {
         return `${variant.priceV2.amount} ${variant.priceV2.currencyCode}`
     }

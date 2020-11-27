@@ -130,7 +130,7 @@ export interface IConnector {
    * @param response The http response
    */
   search: (
-    params: SearchParams,
+    // params: SearchParams,
     request: Request,
     response: Response
   ) => Promise<Result<SearchResult>>

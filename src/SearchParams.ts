@@ -14,6 +14,7 @@ export interface SearchParamsBase {
 }
 
 export default interface SearchParams extends SearchParamsBase {
+  productType?: string;
   /**
    * The search text entered by the user
    */

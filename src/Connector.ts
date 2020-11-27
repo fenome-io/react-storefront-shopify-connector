@@ -27,6 +27,7 @@ import { UPDATE_CHECKOUT_LINES } from "./graphql/updateCheckoutItems"
 import { REMOVE_CHECKOUT_LINES } from "./graphql/removeCheckoutItems"
 import { ADD_CHECKOUT_LINES } from "./graphql/addCheckoutItems"
 import cookie, { serialize } from 'cookie';
+import { PRODUCTS_BY_QUERY } from "./graphql/productsByQuery"
 
 
 export const connector: IConnector = {
@@ -77,7 +78,9 @@ export const connector: IConnector = {
         })
         const result: Result<SubcategoryPageData> = {
             appData: { menu: { items: [] }, tabs: [] },
-            pageData: { title: collection.title, name: collection.title, id: collection.id, total: products.length, page: 0, totalPages: 0, sort: '', sortOptions: [], products, cmsSlots: {} }
+            pageData: {
+                title: collection.title, name: collection.title, id: collection.id, total: products.length, page: 0, totalPages: 0, sort: '', sortOptions: [], products, cmsSlots: {},
+            }
         }
         return result
     },
@@ -171,9 +174,9 @@ export const connector: IConnector = {
             first: 5
         })
         const links = data.map((product) => ({
-            href: '/p/' + product.id,
+            href: '/p/' + product.handle,
             text: product.title,
-            as: '/p/' + product.id,
+            as: '/p/' + product.handle,
             thumbnail: {
                 src: product.images?.[0]?.src,
                 alt: product.title,
@@ -447,31 +450,68 @@ export const connector: IConnector = {
         return result
     },
     search: async (
-        params: SearchParams,
+        // params: SearchParams,
         request: Request,
         response: Response
     ) => {
-        const data = await client.product.fetchQuery({
-            query: params.q ?? '',
-            sortBy: 'updated_at',
-
-        })
-        const products = data.map((product) => ({
-            id: product.id as string,
-            url: '/p/' + product.id,
-            name: product.title,
-            price: parseInt(product.variants[0].price),
-            thumbnail: {
-                src: product.images?.[0]?.src,
-                alt: product.title,
-                type: "image" as 'image'
+        const ITEM_PER_PAGE = 10
+        const params: SearchParams = request.query
+        console.log(params)
+        const res = (await Client.query({
+            query: PRODUCTS_BY_QUERY,
+            variables: {
+                first: ITEM_PER_PAGE,
+                query: params.productType ? `${params.q} AND ${params.productType}` : params.q,
+                sortKey: params.sort ?? 'UPDATED_AT',
             }
+        }))
+        const products = res.data.products.edges.map((edge) => ({
+            id: edge.node.handle,
+            url: '/p/' + edge.node.handle,
+            name: edge.node.title,
+            price: getPrice(edge.node.priceRange.minVariantPrice.amount,
+                edge.node.priceRange.maxVariantPrice.amount,
+                edge.node.priceRange.minVariantPrice.currencyCode),
+            thumbnail: {
+                src: edge.node.images?.edges?.[0]?.node.transformedSrc,
+                alt: edge.node.images?.edges?.[0]?.node.altText,
+                type: "image"
+            },
 
         }))
+
+        // console.log(res.data.products.pageInfo.hasNextPage)
+        // console.log(res.data.productTypes)
+        const cursor = res.data?.products?.edges?.slice(-1)?.[0]?.cursor
         const result: Result<SearchResult> = {
             appData: { menu: { items: [] }, tabs: [] },
-            pageData: { total: 0, page: 0, totalPages: 0, sort: '', sortOptions: [], products, cmsSlots: {} }
+            pageData: {
+                total: products?.length, page: 0, totalPages: 0, sort: '', sortOptions: [{
+                    name: 'UPDATED_AT',
+                    code: 'UPDATED_AT',
+                },
+                {
+                    name: 'PRICE',
+                    code: 'PRICE',
+                }, {
+                    name: 'RELEVANCE',
+                    code: 'RELEVANCE',
+                }, {
+                    name: 'BEST_SELLING',
+                    code: 'BEST_SELLING',
+                },], products, cmsSlots: {},
+                facets: [{
+                    name: 'ProductType',
+                    options: res.data.productTypes.edges.map(edge => ({
+                        name: edge.node,
+                        code: edge.node
+                    })),
+                    ui: "buttons"
+                }]
+
+            }
         }
+        response.json(result)
         return result
     },
     signIn: async (
