@@ -28,6 +28,7 @@ import { REMOVE_CHECKOUT_LINES } from "./graphql/removeCheckoutItems"
 import { ADD_CHECKOUT_LINES } from "./graphql/addCheckoutItems"
 import cookie, { serialize } from 'cookie';
 import { PRODUCTS_BY_QUERY } from "./graphql/productsByQuery"
+import { PRODUCT_RECOMMENDATIONS_BY_ID } from "./graphql/productRecommendations"
 
 
 export const connector: IConnector = {
@@ -101,7 +102,8 @@ export const connector: IConnector = {
             pageData: {
                 breadcrumbs: [],
                 product: {
-                    id: (product as any)?.handle,
+                    id: (product as any)?.handle,//must be refactored to slug or handle
+                    productId: (product as any).id,
                     url: '/p/' + (product as any)?.handle,
                     name: product.title,
                     price: isVariable(product) ? product?.variantBySelectedOptions?.priceV2?.amount : product.variants?.edges?.[0].node.priceV2?.amount,
@@ -160,7 +162,33 @@ export const connector: IConnector = {
         return result
     },
     productSuggestions: async (id: string, request: Request, response: Response) => {
-        const result: Product[] = []
+        const products = (await Client.query({
+            query: PRODUCT_RECOMMENDATIONS_BY_ID,
+            variables: {
+                productId: id,
+            }
+        }))?.data?.productRecommendations
+        console.log(id)
+
+        const result: Product[] = products.map((product: ShopifyBuy.Product) => {
+            return {
+                id: (product as any).handle,
+                url: '/p/' + (product as any).handle,
+                name: product.title,
+                price: getPrice((product as any).priceRange.minVariantPrice.amount,
+                    (product as any).priceRange.maxVariantPrice.amount,
+                    (product as any).priceRange.minVariantPrice.currencyCode),
+                thumbnail: {
+                    src: (product as any).images?.edges?.[0]?.node.transformedSrc,
+                    alt: (product as any).images?.edges?.[0]?.node.altText,
+                    type: "image"
+                },
+                sku: (product.variants?.edges?.[0].node as any)?.sku,
+                colors: product.options.find(option => option.name == 'Color')
+                    ?.values.map(value => ({ id: value.value, text: value.value })),
+
+            }
+        })
         return result
     },
     searchSuggestions: async (

@@ -18,6 +18,7 @@ export default interface ProductPageData {
  */
 export interface Product extends ProductSummary {
   sku?: string
+  productId?: string
   /**
    * The id used for looking up reviews for the product
    */

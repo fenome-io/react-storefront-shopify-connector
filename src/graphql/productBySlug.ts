@@ -2,6 +2,7 @@ import { gql } from '@apollo/client';
 export const PRODUCT_BY_SLUG = gql`
   query productByHandle($handle: String!) {
     productByHandle(handle: $handle) {
+      id
       handle
       title
       description
