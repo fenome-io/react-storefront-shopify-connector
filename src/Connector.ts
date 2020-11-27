@@ -41,7 +41,7 @@ export const connector: IConnector = {
             as: `/s/${c.handle}`
         }))
         const result: Result<HomePageData> = {
-            appData: { menu: { items }, tabs: items },
+            appData: { menu: { items: [] }, tabs: items },
             pageData: { title: data.name, slots: { heading: data.name } }
         }
         return result
@@ -57,6 +57,12 @@ export const connector: IConnector = {
                 handle: params.slug?.[0]
             }
         }))?.data?.collectionByHandle
+        const collections = await client.collection.fetchAll()
+        const items: Array<MenuItem> = collections.map(c => ({
+            text: c.title,
+            href: `/s/[subcategoryId]`,
+            as: `/s/${c.handle}`
+        }))
         const products = collection.products?.edges.map((edge: { node: ShopifyBuy.Product }) => {
             const product = edge.node
             return {
@@ -78,7 +84,7 @@ export const connector: IConnector = {
             }
         })
         const result: Result<SubcategoryPageData> = {
-            appData: { menu: { items: [] }, tabs: [] },
+            appData: { menu: { items: [] }, tabs: items },
             pageData: {
                 title: collection.title, name: collection.title, id: collection.id, total: products.length, page: 0, totalPages: 0, sort: '', sortOptions: [], products, cmsSlots: {},
             }
@@ -97,8 +103,14 @@ export const connector: IConnector = {
                 selectedOptions: params.size && [{ name: "Size", value: params.size }]
             }
         }))?.data?.productByHandle
+        const collections = await client.collection.fetchAll()
+        const items: Array<MenuItem> = collections.map(c => ({
+            text: c.title,
+            href: `/s/[subcategoryId]`,
+            as: `/s/${c.handle}`
+        }))
         const result: Result<ProductPageData> = {
-            appData: { menu: { items: [] }, tabs: [] },
+            appData: { menu: { items: [] }, tabs: items },
             pageData: {
                 breadcrumbs: [],
                 product: {
@@ -302,9 +314,14 @@ export const connector: IConnector = {
                 id: cookie.parse(request.headers.cookie).checkoutId
             }
         }))
-
+        const collections = await client.collection.fetchAll()
+        const items: Array<MenuItem> = collections.map(c => ({
+            text: c.title,
+            href: `/s/[subcategoryId]`,
+            as: `/s/${c.handle}`
+        }))
         const result: Result<CartResponse> = {
-            appData: { menu: { items: [] }, tabs: [] },
+            appData: { menu: { items: [] }, tabs: items },
             pageData: {
                 cart: {
                     items: checkoutData.data.node.lineItems.edges.map(edge => {
@@ -511,8 +528,14 @@ export const connector: IConnector = {
         // console.log(res.data.products.pageInfo.hasNextPage)
         // console.log(res.data.productTypes)
         const cursor = res.data?.products?.edges?.slice(-1)?.[0]?.cursor
+        const collections = await client.collection.fetchAll()
+        const items: Array<MenuItem> = collections.map(c => ({
+            text: c.title,
+            href: `/s/[subcategoryId]`,
+            as: `/s/${c.handle}`
+        }))
         const result: Result<SearchResult> = {
-            appData: { menu: { items: [] }, tabs: [] },
+            appData: { menu: { items: [] }, tabs: items },
             pageData: {
                 total: products?.length, page: 0, totalPages: 0, sort: '', sortOptions: [{
                     name: 'UPDATED_AT',
