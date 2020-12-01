@@ -42,7 +42,7 @@ export const connector: IConnector = {
         }))
         const result: Result<HomePageData> = {
             appData: { menu: { items: [] }, tabs: items },
-            pageData: { title: data.name, slots: { heading: data.name } }
+            pageData: { title: data?.name, slots: { heading: data?.name } }
         }
         return result
     },
@@ -63,7 +63,7 @@ export const connector: IConnector = {
             href: `/s/[subcategoryId]`,
             as: `/s/${c.handle}`
         }))
-        const products = collection.products?.edges.map((edge: { node: ShopifyBuy.Product }) => {
+        const products = collection?.products?.edges.map((edge: { node: ShopifyBuy.Product }) => {
             const product = edge.node
             return {
                 id: (product as any).handle,
@@ -202,6 +202,7 @@ export const connector: IConnector = {
             }
         })
         return result
+
     },
     searchSuggestions: async (
         query: string,
@@ -213,12 +214,12 @@ export const connector: IConnector = {
             sortBy: 'RELEVANCE',
             first: 5
         })
-        const links = data.map((product) => ({
-            href: '/p/' + product.handle,
-            text: product.title,
-            as: '/p/' + product.handle,
+        const links = data?.map((product) => ({
+            href: '/p/' + product?.handle,
+            text: product?.title,
+            as: '/p/' + product?.handle,
             thumbnail: {
-                src: product.images?.[0]?.src,
+                src: product?.images?.[0]?.src,
                 alt: product.title,
                 type: "image" as 'image'
             }
@@ -229,13 +230,13 @@ export const connector: IConnector = {
             sortBy: 'RELEVANCE',
             first: 5
         })
-        const collectionLinks = collectionData.map((collection) => ({
-            href: '/s/' + collection.id,
-            text: collection.title,
-            as: '/s/' + collection.id,
+        const collectionLinks = collectionData?.map((collection) => ({
+            href: '/s/' + collection?.id,
+            text: collection?.title,
+            as: '/s/' + collection?.id,
             thumbnail: {
-                src: collection.image?.src,
-                alt: collection.title,
+                src: collection?.image?.src,
+                alt: collection?.title,
                 type: "image" as 'image'
             }
 
@@ -267,7 +268,7 @@ export const connector: IConnector = {
             }))
             const result: Session = {
                 cart: {
-                    items: checkoutData.data.node.lineItems.edges.map(edge => {
+                    items: checkoutData?.data?.node?.lineItems?.edges?.map(edge => {
                         const item = edge.node
                         return {
                             id: item.id,
@@ -302,7 +303,7 @@ export const connector: IConnector = {
                     items: []
                 }
             }
-            response.setHeader('Set-Cookie', serialize('checkoutId', checkoutData.checkout.id));
+            response.setHeader('Set-Cookie', serialize('checkoutId', checkoutData?.checkout?.id));
             return result
         }
 
@@ -315,22 +316,22 @@ export const connector: IConnector = {
             }
         }))
         const collections = await client.collection.fetchAll()
-        const items: Array<MenuItem> = collections.map(c => ({
-            text: c.title,
+        const items: Array<MenuItem> = collections?.map(c => ({
+            text: c?.title,
             href: `/s/[subcategoryId]`,
-            as: `/s/${c.handle}`
+            as: `/s/${c?.handle}`
         }))
         const result: Result<CartResponse> = {
             appData: { menu: { items: [] }, tabs: items },
             pageData: {
                 cart: {
-                    items: checkoutData.data.node.lineItems.edges.map(edge => {
+                    items: checkoutData?.data?.node?.lineItems?.edges.map(edge => {
                         const item = edge.node
                         return {
                             id: item.id,
                             quantity: item.quantity,
                             name: item.title,
-                            url: '/p/' + item.variant.product.handle,
+                            url: '/p/' + item.variant?.product.handle,
                             price: item.variant.priceV2.amount,
                             thumbnail: {
                                 src: item.variant.image.transformedSrc,
@@ -357,25 +358,25 @@ export const connector: IConnector = {
                     checkoutId: cookie.parse(request.headers.cookie).checkoutId,
                     lineItems: [
                         {
-                            quantity: product.quantity,
-                            variantId: product.product.variantBySelectedOptions.id
+                            quantity: product?.quantity,
+                            variantId: product?.product.variantBySelectedOptions.id
                         }
                     ]
                 }
             }))?.data?.checkoutLineItemsAdd
             const result: CartResponse = {
                 cart: {
-                    items: checkoutData.checkout.lineItems.edges.map(edge => {
+                    items: checkoutData?.checkout?.lineItems?.edges.map(edge => {
                         const item = edge.node
                         return {
-                            id: item.id,
-                            quantity: item.quantity,
-                            name: item.title,
-                            url: '/p/' + item.variant.product.handle,
-                            price: item.variant.priceV2.amount,
+                            id: item?.id,
+                            quantity: item?.quantity,
+                            name: item?.title,
+                            url: '/p/' + item?.variant?.product.handle,
+                            price: item?.variant?.priceV2?.amount,
                             thumbnail: {
-                                src: item.variant.image.transformedSrc,
-                                alt: item.variant.image.altText,
+                                src: item?.variant?.image?.transformedSrc,
+                                alt: item?.variant?.image?.altText,
                                 type: "image"
                             },
                         }
@@ -391,8 +392,8 @@ export const connector: IConnector = {
                     input: {
                         lineItems: [
                             {
-                                quantity: product.quantity,
-                                variantId: product.product.variantBySelectedOptions.id
+                                quantity: product?.quantity,
+                                variantId: product?.product?.variantBySelectedOptions?.id
                             }
                         ]
                     }
@@ -401,7 +402,7 @@ export const connector: IConnector = {
 
             const result: CartResponse = {
                 cart: {
-                    items: checkoutData.checkout.lineItems.edges.map(edge => {
+                    items: checkoutData?.checkout?.lineItems?.edges.map(edge => {
                         const item = edge.node
                         return {
                             id: item.id,
@@ -418,7 +419,7 @@ export const connector: IConnector = {
                     })
                 }
             }
-            response.setHeader('Set-Cookie', serialize('checkoutId', checkoutData.checkout.id));
+            response.setHeader('Set-Cookie', serialize('checkoutId', checkoutData?.checkout?.id));
             return result
         }
     },
@@ -444,7 +445,7 @@ export const connector: IConnector = {
 
         const result: CartResponse = {
             cart: {
-                items: checkoutData.checkout.lineItems.edges.map(edge => {
+                items: checkoutData?.checkout?.lineItems?.edges.map(edge => {
                     const item = edge.node
                     return {
                         id: item.id,
@@ -474,7 +475,7 @@ export const connector: IConnector = {
         }))?.data?.checkoutLineItemsRemove
         const result: CartResponse = {
             cart: {
-                items: checkoutData.checkout.lineItems.edges.map(edge => {
+                items: checkoutData?.checkout?.lineItems?.edges.map(edge => {
                     const item = edge.node
                     return {
                         id: item.id,
@@ -510,7 +511,7 @@ export const connector: IConnector = {
                 sortKey: params.sort ?? 'UPDATED_AT',
             }
         }))
-        const products = res.data.products.edges.map((edge) => ({
+        const products = res.data?.products?.edges.map((edge) => ({
             id: edge.node.handle,
             url: '/p/' + edge.node.handle,
             name: edge.node.title,
@@ -529,10 +530,10 @@ export const connector: IConnector = {
         // console.log(res.data.productTypes)
         const cursor = res.data?.products?.edges?.slice(-1)?.[0]?.cursor
         const collections = await client.collection.fetchAll()
-        const items: Array<MenuItem> = collections.map(c => ({
-            text: c.title,
+        const items: Array<MenuItem> = collections?.map(c => ({
+            text: c?.title,
             href: `/s/[subcategoryId]`,
-            as: `/s/${c.handle}`
+            as: `/s/${c?.handle}`
         }))
         const result: Result<SearchResult> = {
             appData: { menu: { items: [] }, tabs: items },
