@@ -4,7 +4,7 @@ export default interface Session {
   /**
    * The user's login status
    */
-  signedIn: boolean
+  signedIn?: boolean
   /**
    * Cart data
    */

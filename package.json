@@ -1,6 +1,6 @@
 {
   "name": "@fenome/react-storefront-shopify-connector",
-  "version": "1.0.2",
+  "version": "1.0.5",
   "description": "React Storefront v8 Shopify Connector",
   "main": "dist/index.js",
   "scripts": {

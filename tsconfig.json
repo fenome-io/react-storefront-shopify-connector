@@ -4,7 +4,7 @@
     "module": "commonjs",
     "declaration": true,
     "outDir": "./dist",
-    "strict": true,
+    "strict": false,
     "esModuleInterop": true,
   },
   "typedocOptions": {
@@ -12,5 +12,8 @@
     "out": "docs",
     "name": "React Storefront Connector",
     "theme": "./theme"
-  }
+  },
+  "exclude": [
+    "node_modules"
+  ]
 }

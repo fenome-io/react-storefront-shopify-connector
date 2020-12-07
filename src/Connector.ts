@@ -32,7 +32,7 @@ import { PRODUCT_RECOMMENDATIONS_BY_ID } from "./graphql/productRecommendations"
 
 
 export const connector: IConnector = {
-    home: async (request: Request, response: Response) => {
+    home: async (request: any, response: any) => {
         const data = await client.shop.fetchInfo()
         const collections = await client.collection.fetchAll()
         const items: Array<MenuItem> = collections.map(c => ({
@@ -48,8 +48,8 @@ export const connector: IConnector = {
     },
     subcategory: async (
         params: SubcategoryParams,
-        request: Request,
-        response: Response
+        request: any,
+        response: any
     ) => {
         const collection = (await Client.query({
             query: COLLECTION_BY_SLUG,
@@ -63,7 +63,7 @@ export const connector: IConnector = {
             href: `/s/[subcategoryId]`,
             as: `/s/${c.handle}`
         }))
-        const products = collection?.products?.edges.map((edge: { node: ShopifyBuy.Product }) => {
+        const products = collection?.products?.edges.map((edge: any) => {
             const product = edge.node
             return {
                 id: (product as any).handle,
@@ -78,8 +78,8 @@ export const connector: IConnector = {
                     type: "image"
                 },
                 sku: (product.variants?.edges?.[0].node as any)?.sku,
-                colors: product.options.find(option => option.name == 'Color')
-                    ?.values.map(value => ({ id: value.value, text: value.value })),
+                colors: product.options.find((option: { name: string }) => option.name == 'Color')
+                    ?.values.map((value: any) => ({ id: value, text: value })),
 
             }
         })
@@ -93,14 +93,17 @@ export const connector: IConnector = {
     },
     product: async (
         params: ProductParams,
-        request: Request,
-        response: Response
+        request: any,
+        response: any
     ) => {
+        const selectedOptions = []
+        params.size && selectedOptions.push({ name: "Size", value: params.size })
+        params.color && selectedOptions.push({ name: "Color", value: params.color })
         const product = (await Client.query({
             query: (params.size || params.color) ? PRODUCT_BY_SLUG_WITH_OPTIONS : PRODUCT_BY_SLUG,
             variables: {
                 handle: params.id,
-                selectedOptions: params.size && [{ name: "Size", value: params.size }]
+                selectedOptions
             }
         }))?.data?.productByHandle
         const collections = await client.collection.fetchAll()
@@ -130,10 +133,10 @@ export const connector: IConnector = {
                         type: "image"
                     },
                     sku: (product.variants?.edges?.[0].node as any)?.sku ?? product.variantBySelectedOptions?.sku,
-                    colors: product.options.find(option => option.name == 'Color')
-                        ?.values.map(value => ({ id: value.value, text: value.value })),
-                    sizes: product.options.find(option => option.name == 'Size')
-                        ?.values.map(value => ({ id: value, text: value })),
+                    colors: product.options.find((option: { name: string, values: [] }) => option.name === 'Color')
+                        ?.values.map((value: any) => ({ id: value, text: value })),
+                    sizes: product.options.find((option: { name: string }) => option.name == 'Size')
+                        ?.values.map((value: any) => ({ id: value, text: value })),
                     options: product.options,
                     media: {
                         thumbnails: product?.variantBySelectedOptions?.image ? [
@@ -142,7 +145,7 @@ export const connector: IConnector = {
                                 alt: product?.variantBySelectedOptions?.image?.altText,
                                 type: "image"
                             }
-                        ] : product.images?.edges?.map(edge => ({
+                        ] : product.images?.edges?.map((edge: { node: { transformedSrc: any; altText: any } }) => ({
                             src: edge.node.transformedSrc,
                             alt: edge.node.altText,
                             type: "image"
@@ -153,7 +156,7 @@ export const connector: IConnector = {
                                 alt: product?.variantBySelectedOptions?.image?.altText,
                                 type: "image"
                             }
-                        ] : product.images?.edges?.map(edge => ({
+                        ] : product.images?.edges?.map((edge: { node: { originalSrc: any; altText: any } }) => ({
                             src: edge.node.originalSrc,
                             alt: edge.node.altText,
                             type: "image"
@@ -167,22 +170,22 @@ export const connector: IConnector = {
                 }
             }
         }
+        console.log('product : ', product.options)
         return result
     },
-    productSlots: (params: ProductSlotsParams, request: Request, res: Response) => {
+    productSlots: (params: ProductSlotsParams, request: any, res: any) => {
         const result: CmsSlots = {}
         return result
     },
-    productSuggestions: async (id: string, request: Request, response: Response) => {
+    productSuggestions: async (id: string, request: any, response: any) => {
         const products = (await Client.query({
             query: PRODUCT_RECOMMENDATIONS_BY_ID,
             variables: {
                 productId: id,
             }
         }))?.data?.productRecommendations
-        console.log(id)
 
-        const result: Product[] = products.map((product: ShopifyBuy.Product) => {
+        const result: Product[] = products.map((product: any) => {
             return {
                 id: (product as any).handle,
                 url: '/p/' + (product as any).handle,
@@ -196,8 +199,8 @@ export const connector: IConnector = {
                     type: "image"
                 },
                 sku: (product.variants?.edges?.[0].node as any)?.sku,
-                colors: product.options.find(option => option.name == 'Color')
-                    ?.values.map(value => ({ id: value.value, text: value.value })),
+                colors: product.options.find((option: { name: string }) => option.name == 'Color')
+                    ?.values.map((value: any) => ({ id: value, text: value })),
 
             }
         })
@@ -206,8 +209,8 @@ export const connector: IConnector = {
     },
     searchSuggestions: async (
         query: string,
-        request: Request,
-        response: Response
+        request: any,
+        response: any
     ) => {
         const data = await client.product.fetchQuery({
             query: query,
@@ -215,9 +218,9 @@ export const connector: IConnector = {
             first: 5
         })
         const links = data?.map((product) => ({
-            href: '/p/' + product?.handle,
+            href: '/p/' + (product as any)?.handle,
             text: product?.title,
-            as: '/p/' + product?.handle,
+            as: '/p/' + (product as any)?.handle,
             thumbnail: {
                 src: product?.images?.[0]?.src,
                 alt: product.title,
@@ -258,7 +261,7 @@ export const connector: IConnector = {
         }
         return result
     },
-    session: async (request: Request, response: Response) => {
+    session: async (request: any, response: any) => {
         try {
             const checkoutData = (await Client.query({
                 query: GET_CHECKOUT_BY_ID,
@@ -268,7 +271,7 @@ export const connector: IConnector = {
             }))
             const result: Session = {
                 cart: {
-                    items: checkoutData?.data?.node?.lineItems?.edges?.map(edge => {
+                    items: checkoutData?.data?.node?.lineItems?.edges?.map((edge: { node: any }) => {
                         const item = edge.node
                         return {
                             id: item.id,
@@ -298,7 +301,7 @@ export const connector: IConnector = {
                 }
             }))?.data?.checkoutCreate
 
-            const result: CartResponse = {
+            const result: Session = {
                 cart: {
                     items: []
                 }
@@ -308,7 +311,7 @@ export const connector: IConnector = {
         }
 
     },
-    cart: async (request: Request, response: Response) => {
+    cart: async (request: any, response: any) => {
         const checkoutData = (await Client.query({
             query: GET_CHECKOUT_BY_ID,
             variables: {
@@ -325,7 +328,7 @@ export const connector: IConnector = {
             appData: { menu: { items: [] }, tabs: items },
             pageData: {
                 cart: {
-                    items: checkoutData?.data?.node?.lineItems?.edges.map(edge => {
+                    items: checkoutData?.data?.node?.lineItems?.edges.map((edge: { node: any }) => {
                         const item = edge.node
                         return {
                             id: item.id,
@@ -348,8 +351,8 @@ export const connector: IConnector = {
     },
     addToCart: async (
         product: { product: Product, quantity: number },
-        request: Request,
-        response: Response
+        request: any,
+        response: any
     ) => {
         try {
             const checkoutData = (await Client.mutate({
@@ -366,7 +369,7 @@ export const connector: IConnector = {
             }))?.data?.checkoutLineItemsAdd
             const result: CartResponse = {
                 cart: {
-                    items: checkoutData?.checkout?.lineItems?.edges.map(edge => {
+                    items: checkoutData?.checkout?.lineItems?.edges.map((edge: { node: any }) => {
                         const item = edge.node
                         return {
                             id: item?.id,
@@ -402,7 +405,7 @@ export const connector: IConnector = {
 
             const result: CartResponse = {
                 cart: {
-                    items: checkoutData?.checkout?.lineItems?.edges.map(edge => {
+                    items: checkoutData?.checkout?.lineItems?.edges.map((edge: { node: any }) => {
                         const item = edge.node
                         return {
                             id: item.id,
@@ -426,8 +429,8 @@ export const connector: IConnector = {
     updateCartItem: async (
         item: CartItem,
         quantity: number,
-        request: Request,
-        response: Response
+        request: any,
+        response: any
     ) => {
 
         const checkoutData = (await Client.mutate({
@@ -445,7 +448,7 @@ export const connector: IConnector = {
 
         const result: CartResponse = {
             cart: {
-                items: checkoutData?.checkout?.lineItems?.edges.map(edge => {
+                items: checkoutData?.checkout?.lineItems?.edges.map((edge: { node: any }) => {
                     const item = edge.node
                     return {
                         id: item.id,
@@ -465,7 +468,7 @@ export const connector: IConnector = {
         // response.setHeader('Set-Cookie', serialize('checkoutId', checkoutData.checkout.id));
         return result
     },
-    removeCartItem: async (item: CartItem, request: Request, response: Response) => {
+    removeCartItem: async (item: CartItem, request: any, response: any) => {
         const checkoutData = (await Client.mutate({
             mutation: REMOVE_CHECKOUT_LINES,
             variables: {
@@ -475,7 +478,7 @@ export const connector: IConnector = {
         }))?.data?.checkoutLineItemsRemove
         const result: CartResponse = {
             cart: {
-                items: checkoutData?.checkout?.lineItems?.edges.map(edge => {
+                items: checkoutData?.checkout?.lineItems?.edges.map((edge: { node: any }) => {
                     const item = edge.node
                     return {
                         id: item.id,
@@ -497,12 +500,11 @@ export const connector: IConnector = {
     },
     search: async (
         // params: SearchParams,
-        request: Request,
-        response: Response
+        request: any,
+        response: any
     ) => {
         const ITEM_PER_PAGE = 10
         const params: SearchParams = request.query
-        console.log(params)
         const res = (await Client.query({
             query: PRODUCTS_BY_QUERY,
             variables: {
@@ -511,7 +513,7 @@ export const connector: IConnector = {
                 sortKey: params.sort ?? 'UPDATED_AT',
             }
         }))
-        const products = res.data?.products?.edges.map((edge) => ({
+        const products = res.data?.products?.edges.map((edge: { node: { handle: string; title: any; priceRange: { minVariantPrice: { amount: string; currencyCode: string }; maxVariantPrice: { amount: string } }; images: { edges: { node: { transformedSrc: string, altText: any } }[] } } }) => ({
             id: edge.node.handle,
             url: '/p/' + edge.node.handle,
             name: edge.node.title,
@@ -554,7 +556,7 @@ export const connector: IConnector = {
                 },], products, cmsSlots: {},
                 facets: [{
                     name: 'ProductType',
-                    options: res.data.productTypes.edges.map(edge => ({
+                    options: res.data.productTypes.edges.map((edge: { node: any }) => ({
                         name: edge.node,
                         code: edge.node
                     })),
@@ -569,8 +571,8 @@ export const connector: IConnector = {
     signIn: async (
         email: string,
         password: string,
-        request: Request,
-        response: Response
+        request: any,
+        response: any
     ) => {
         const result: Session = {
             cart: { items: [] },
@@ -578,14 +580,14 @@ export const connector: IConnector = {
         }
         return result
     },
-    signOut: async (request: Request, response: Response) => {
+    signOut: async (request: any, response: any) => {
         const result: Session = {
             cart: { items: [] },
             signedIn: false
         }
         return result
     },
-    signUp: async (data: SignUpData, request: Request, response: Response) => {
+    signUp: async (data: SignUpData, request: any, response: any) => {
         const result: Session = {
             cart: { items: [] },
             signedIn: false

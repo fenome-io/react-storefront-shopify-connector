@@ -23,7 +23,7 @@ export interface IConnector {
   /**
    * Returns data for the home page
    */
-  home: (request: Request, response: Response) => Promise<Result<HomePageData>>
+  home: (request: any, response: any) => Promise<Result<HomePageData>>
 
   /**
    * Returns data for the PLP
@@ -33,8 +33,8 @@ export interface IConnector {
    */
   subcategory: (
     params: SubcategoryParams,
-    request: Request,
-    response: Response
+    request: any,
+    response: any
   ) => Promise<Result<SubcategoryPageData>>
 
   /**
@@ -45,15 +45,15 @@ export interface IConnector {
    */
   product: (
     params: ProductParams,
-    request: Request,
-    response: Response
+    request: any,
+    response: any
   ) => Promise<Result<ProductPageData>>
 
   /**
    * Returns the HTML for a late-loaded CMS slot on the product page.  For example,
    * it's common to late load reviews as an HTML blob retrieved from a 3rd party review provider.
    */
-  productSlots: (params: ProductSlotsParams, request: Request, res: Response) => CmsSlots
+  productSlots: (params: ProductSlotsParams, request: any, res: any) => CmsSlots
 
   /**
    * Returns suggested products based on a product being viewed
@@ -61,7 +61,7 @@ export interface IConnector {
    * @param request The http request
    * @param response The http response
    */
-  productSuggestions: (id: string, request: Request, response: Response) => Promise<Product[]>
+  productSuggestions: (id: string, request: any, response: any) => Promise<Product[]>
 
   /**
    * Returns suggestions based on the user's search text
@@ -71,8 +71,8 @@ export interface IConnector {
    */
   searchSuggestions: (
     query: string,
-    request: Request,
-    response: Response
+    request: any,
+    response: any
   ) => Promise<SearchSuggestions>
 
   /**
@@ -80,14 +80,14 @@ export interface IConnector {
    * @param request The http request
    * @param response The http response
    */
-  session: (request: Request, response: Response) => Promise<Session>
+  session: (request: any, response: any) => Promise<Session>
 
   /**
    * Returns data for the cart page
    * @param request The http request
    * @param response The http response
    */
-  cart: (request: Request, response: Response) => Promise<Result<CartResponse>>
+  cart: (request: any, response: any) => Promise<Result<CartResponse>>
 
   /**
    * Adds product to cart
@@ -98,8 +98,8 @@ export interface IConnector {
    */
   addToCart: (
     product: { product: Product, quantity: number },
-    request: Request,
-    response: Response
+    request: any,
+    response: any
   ) => Promise<CartResponse>
 
   /**
@@ -112,8 +112,8 @@ export interface IConnector {
   updateCartItem: (
     item: CartItem,
     quantity: number,
-    request: Request,
-    response: Response
+    request: any,
+    response: any
   ) => Promise<CartResponse>
 
   /**
@@ -122,7 +122,7 @@ export interface IConnector {
    * @param request The http request
    * @param response The http response
    */
-  removeCartItem: (item: CartItem, request: Request, response: Response) => Promise<CartResponse>
+  removeCartItem: (item: CartItem, request: any, response: any) => Promise<CartResponse>
 
   /**
    * Searches for matching products
@@ -131,8 +131,8 @@ export interface IConnector {
    */
   search: (
     // params: SearchParams,
-    request: Request,
-    response: Response
+    request: any,
+    response: any
   ) => Promise<Result<SearchResult>>
 
   /**
@@ -146,8 +146,8 @@ export interface IConnector {
   signIn: (
     email: string,
     password: string,
-    request: Request,
-    response: Response
+    request: any,
+    response: any
   ) => Promise<Session>
 
   /**
@@ -155,7 +155,7 @@ export interface IConnector {
    * @param request The http request
    * @param response The http response
    */
-  signOut: (request: Request, response: Response) => Promise<Session>
+  signOut: (request: any, response: any) => Promise<Session>
 
   /**
    * Signs the user up for an account
@@ -163,7 +163,7 @@ export interface IConnector {
    * @param request The http request
    * @param response The http response
    */
-  signUp: (data: SignUpData, request: Request, response: Response) => Promise<Session>
+  signUp: (data: SignUpData, request: any, response: any) => Promise<Session>
 
   /**
    * Routing rules that map express-style path expressions to next.js page routes. Use routes to map
