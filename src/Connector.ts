@@ -92,7 +92,6 @@ export const connector: IConnector = {
                 title: collection?.title, name: collection?.title, id: collection?.id, total: products?.length + 1, page: 1, totalPages: 4, afterCursor: afterCursor, sort: '', sortOptions: [], products, cmsSlots: {},
             }
         }
-        console.log('connector', params.afterCursor, result.pageData.afterCursor, collection?.products.pageInfo.hasNextPage)
         return result
     },
     product: async (
@@ -174,7 +173,6 @@ export const connector: IConnector = {
                 }
             }
         }
-        console.log('product : ', product.options)
         return result
     },
     productSlots: (params: ProductSlotsParams, request: any, res: any) => {
@@ -512,7 +510,8 @@ export const connector: IConnector = {
         const res = (await Client.query({
             query: PRODUCTS_BY_QUERY,
             variables: {
-                first: ITEM_PER_PAGE,
+                first: 2,
+                after: params.afterCursor,
                 query: params.productType ? `${params.q} AND ${params.productType}` : params.q,
                 sortKey: params.sort ?? 'UPDATED_AT',
             }
@@ -531,10 +530,8 @@ export const connector: IConnector = {
             },
 
         }))
+        const afterCursor: string = res.data?.products.pageInfo.hasNextPage ? res.data?.products?.edges?.slice(-1)[0].cursor : undefined
 
-        // console.log(res.data.products.pageInfo.hasNextPage)
-        // console.log(res.data.productTypes)
-        const cursor = res.data?.products?.edges?.slice(-1)?.[0]?.cursor
         const collections = await client.collection.fetchAll()
         const items: Array<MenuItem> = collections?.map(c => ({
             text: c?.title,
@@ -544,6 +541,7 @@ export const connector: IConnector = {
         const result: Result<SearchResult> = {
             appData: { menu: { items: [] }, tabs: items },
             pageData: {
+                afterCursor,
                 total: products?.length, page: 0, totalPages: 0, sort: '', sortOptions: [{
                     name: 'UPDATED_AT',
                     code: 'UPDATED_AT',

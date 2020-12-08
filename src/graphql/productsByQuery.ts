@@ -1,10 +1,9 @@
 import { gql } from '@apollo/client';
 export const PRODUCTS_BY_QUERY = gql`
-  query products($first: Int!, $query: String, $sortKey: ProductSortKeys, $reverse: Boolean) {
-    products(first: $first, query: $query, sortKey: $sortKey, reverse: $reverse) {
+  query products($first: Int!,$after: String, $query: String, $sortKey: ProductSortKeys, $reverse: Boolean) {
+    products(first: $first, query: $query, sortKey: $sortKey, reverse: $reverse, after: $after) {
       pageInfo {
         hasNextPage
-        hasPreviousPage
       }
       edges {
         cursor
