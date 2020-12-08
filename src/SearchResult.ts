@@ -15,6 +15,7 @@ export default interface SearchResult {
    * the total number of pages
    */
   totalPages: number
+  afterCursor?: string
   /**
    * the filters that were applied
    */

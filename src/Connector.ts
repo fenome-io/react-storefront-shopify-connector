@@ -54,7 +54,9 @@ export const connector: IConnector = {
         const collection = (await Client.query({
             query: COLLECTION_BY_SLUG,
             variables: {
-                handle: params.slug?.[0]
+                handle: params.slug?.[0],
+                first: 2,
+                after: params.afterCursor
             }
         }))?.data?.collectionByHandle
         const collections = await client.collection.fetchAll()
@@ -63,22 +65,23 @@ export const connector: IConnector = {
             href: `/s/[subcategoryId]`,
             as: `/s/${c.handle}`
         }))
+        const afterCursor: string = collection?.products.pageInfo.hasNextPage ? collection?.products?.edges?.slice(-1)[0].cursor : undefined
         const products = collection?.products?.edges.map((edge: any) => {
             const product = edge.node
             return {
-                id: (product as any).handle,
+                id: (product as any)?.handle,
                 url: '/p/' + (product as any).handle,
-                name: product.title,
-                price: getPrice((product as any).priceRange.minVariantPrice.amount,
-                    (product as any).priceRange.maxVariantPrice.amount,
-                    (product as any).priceRange.minVariantPrice.currencyCode),
+                name: product?.title,
+                price: getPrice((product as any)?.priceRange.minVariantPrice.amount,
+                    (product as any)?.priceRange.maxVariantPrice.amount,
+                    (product as any)?.priceRange.minVariantPrice.currencyCode),
                 thumbnail: {
-                    src: (product as any).images?.edges?.[0]?.node.transformedSrc,
-                    alt: (product as any).images?.edges?.[0]?.node.altText,
+                    src: (product as any)?.images?.edges?.[0]?.node.transformedSrc,
+                    alt: (product as any)?.images?.edges?.[0]?.node.altText,
                     type: "image"
                 },
-                sku: (product.variants?.edges?.[0].node as any)?.sku,
-                colors: product.options.find((option: { name: string }) => option.name == 'Color')
+                sku: (product?.variants?.edges?.[0].node as any)?.sku,
+                colors: product?.options.find((option: { name: string }) => option.name == 'Color')
                     ?.values.map((value: any) => ({ id: value, text: value })),
 
             }
@@ -86,9 +89,10 @@ export const connector: IConnector = {
         const result: Result<SubcategoryPageData> = {
             appData: { menu: { items: [] }, tabs: items },
             pageData: {
-                title: collection.title, name: collection.title, id: collection.id, total: products.length, page: 0, totalPages: 0, sort: '', sortOptions: [], products, cmsSlots: {},
+                title: collection?.title, name: collection?.title, id: collection?.id, total: products?.length + 1, page: 1, totalPages: 4, afterCursor: afterCursor, sort: '', sortOptions: [], products, cmsSlots: {},
             }
         }
+        console.log('connector', params.afterCursor, result.pageData.afterCursor, collection?.products.pageInfo.hasNextPage)
         return result
     },
     product: async (

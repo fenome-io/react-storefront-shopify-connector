@@ -2,7 +2,7 @@ export interface SearchParamsBase {
   /**
    * The page of data to retreive
    */
-  page?: number
+  page?: string
   /**
    * The codes corresponding to the selected filters
    */
@@ -11,6 +11,7 @@ export interface SearchParamsBase {
    * The code corresponding to the selected sort option
    */
   sort?: string
+  afterCursor?: string;
 }
 
 export default interface SearchParams extends SearchParamsBase {

@@ -1,11 +1,15 @@
 import { gql } from '@apollo/client';
 export const COLLECTION_BY_SLUG = gql`
-  query collectionBySlug($handle: String!) {
+  query collectionBySlug($handle: String!, $first: Int,$after: String) {
     collectionByHandle(handle: $handle) {
       handle
       title
-      products(first: 10) {
+      products(first: $first, after: $after) {
+        pageInfo {
+          hasNextPage
+        }
         edges {
+          cursor
           node {
             handle
             title
